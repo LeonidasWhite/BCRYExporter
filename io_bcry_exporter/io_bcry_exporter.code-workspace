@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.analysis.openFilesOnly": false,
+		"python.autoComplete.addBrackets": true,
+		"python.jediEnabled": false,
+		"python.globalModuleInstallation": true
+	},
+	"extensions": {
+		"recommendations": []
+	}
+}
