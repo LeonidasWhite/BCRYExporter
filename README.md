@@ -24,6 +24,8 @@ What's new:
 
 Menu: Blender 2.80 has Quick Favorite menu which called by "Q" key. But there is not way to add to quick favorite from python code. I added this menu in Configuration section. You can do right mouse click on them and set "Add to Quick favorite".
 
+About Notaprim collision: Now when you click to create notaprim - blender will create the same "wired" box. You must delete this box in edit mode and add any mesh which you want to be a collision (as example a separate part from original object). In future I will update pipeline of this button.
+
 Known issues/limitation:
 1) Custom split normal doesn't support Sharp edges in skin node. Solution: Add Edge split modifier before Armature modifier, set up and apply. The skin mesh will be rip in Sharp edges places.
 2) There is no way to set active any collection, so be careful that current active collection be unhide and not disable. Otherwise you can expect Error that Object is Null. I put in some operators code which set Master collection(Scene Collection) active.
