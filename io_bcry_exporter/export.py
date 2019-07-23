@@ -567,7 +567,7 @@ class CrytekDaeExporter:
         if utils.get_mesh_export_nodes(self._config.export_selected_nodes):
             if utils.are_duplicate_nodes():
                 message = "Duplicate Node Names"
-                bpy.ops.screen.display_error('INVOKE_DEFAULT', message=message)
+                bpy.ops.bcry.display_error('INVOKE_DEFAULT', message=message)
 
             for group in utils.get_mesh_export_nodes(
                     self._config.export_selected_nodes):

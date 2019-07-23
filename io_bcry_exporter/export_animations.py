@@ -341,7 +341,7 @@ class CrytekDaeAnimationExporter(export.CrytekDaeExporter):
         if utils.get_animation_export_nodes():
             if utils.are_duplicate_nodes():
                 message = "Duplicate Node Names"
-                bpy.ops.screen.display_error('INVOKE_DEFAULT', message=message)
+                bpy.ops.bcry.display_error('INVOKE_DEFAULT', message=message)
 
             self._write_export_node(group, visual_scene)
         else:

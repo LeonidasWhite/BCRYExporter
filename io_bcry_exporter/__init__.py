@@ -3182,7 +3182,7 @@ class BCRY_OT_export_animations(bpy.types.Operator, ExportHelper):
 
         except exceptions.BCryException as exception:
             bcPrint(exception.what(), 'error')
-            bpy.ops.screen.display_error(
+            bpy.ops.bcry.display_error(
                 'INVOKE_DEFAULT', message=exception.what())
 
         return {'FINISHED'}
@@ -3351,7 +3351,7 @@ class BCRY_OT_quick_export(bpy.types.Operator, ExportHelper):
 
         except exceptions.BCryException as exception:
             bcPrint(exception.what(), 'error')
-            bpy.ops.screen.display_error(
+            bpy.ops.bcry.display_error(
                 'INVOKE_DEFAULT', message=exception.what())
 
         return {'FINISHED'}
