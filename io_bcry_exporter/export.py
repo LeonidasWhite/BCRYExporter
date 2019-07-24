@@ -184,7 +184,6 @@ class CrytekDaeExporter:
                 if object_.type != 'MESH':
                     continue
 
-                
                 apply_modifiers = self._config.apply_modifiers
                 if utils.get_node_type(collection) in ('chr', 'skin'):
                     apply_modifiers = False
@@ -539,7 +538,6 @@ class CrytekDaeExporter:
         vertex_weights.appendChild(v)
 
         skin_node.appendChild(vertex_weights)
-        
 
     # -----------------------------------------------------------------------------
     # Library Animation and Clips: --> Animations, F-Curves
@@ -1084,7 +1082,6 @@ def save(config):
     # prevent wasting time for exporting if RC was not found
     if not config.disable_rc and not os.path.isfile(config.rc_path):
         raise exceptions.NoRcSelectedException
-
 
     exporter = CrytekDaeExporter(config)
     exporter.export()

@@ -1060,8 +1060,7 @@ class BCRY_OT_add_material(bpy.types.Operator):
                         bcPrint("Object " + _object.name +
                                 " not assigned to any group")
                         message = "Selected Objects is not export node "
-                    
-            
+
         else:
             message = "No Objects Selected"
 
@@ -2481,7 +2480,6 @@ class BCRY_OT_physicalize_skeleton(bpy.types.Operator):
                 object_ = bpy.context.active_object
                 object_.name = name
                 object_.data.name = name
-                
 
                 bpy.ops.object.mode_set(mode='EDIT')
 
@@ -2504,11 +2502,10 @@ class BCRY_OT_physicalize_skeleton(bpy.types.Operator):
 
                 if collection:
                     collection.objects.link(object_)
-                
+
                 for c in object_.users_collection:
                     if c != collection:
                         c.objects.unlink(object_)
-                
 
                 object_.show_transparent = True
                 object_.show_wire = True
@@ -2915,6 +2912,7 @@ class BCRY_OT_rebuild_armature(bpy.types.Operator):
 # Export Handler:
 # ------------------------------------------------------------------------------
 
+
 class BCRY_OT_export(bpy.types.Operator, ExportHelper):
     '''Select to export to game.'''
     bl_label = "Export to CryEngine"
@@ -3031,7 +3029,6 @@ class BCRY_OT_export(bpy.types.Operator, ExportHelper):
 
             for attribute in attributes:
                 setattr(self, attribute, getattr(config, attribute))
-            
 
             setattr(self, 'bcry_version', VERSION)
             setattr(self, 'rc_path', Configuration.rc_path)
@@ -3424,7 +3421,7 @@ class BCRY_OT_error_handler(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         col = layout.column()
-        col.label(self.bl_label, icon='ERROR')
+        col.label(text=self.bl_label, icon='ERROR')
         col.split()
         multiline_label(col, self.message)
         col.split()
@@ -3434,7 +3431,7 @@ class BCRY_OT_error_handler(bpy.types.Operator):
 def multiline_label(col, text):
     for line in text.splitlines():
         row = col.split()
-        row.label(line)
+        row.label(text=line)
 
 
 # ------------------------------------------------------------------------------
@@ -4240,6 +4237,7 @@ def register():
 
     bpy.types.MATERIAL_MT_context_menu.append(physics_menu)
     bpy.types.MESH_MT_vertex_group_context_menu.append(remove_unused_vertex_groups)
+
 
 def unregister():
     unregister_bcry_icons()
