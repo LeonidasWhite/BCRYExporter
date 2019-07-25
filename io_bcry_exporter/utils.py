@@ -696,11 +696,13 @@ def get_animation_export_nodes(just_selected=False):
     if just_selected:
         return __get_selected_nodes()
 
-    ALLOWED_NODE_TYPES = ('anm', 'i_caf')
-    for collection in bpy.data.collections:
-        if is_export_node(collection) and len(collection.objects) > 0:
-            if get_node_type(collection) in ALLOWED_NODE_TYPES:
-                export_nodes.append(collection)
+    export_nodes_collection = bpy.data.collections.get("cry_export_nodes")
+    if export_nodes_collection is not None:
+        ALLOWED_NODE_TYPES = ('anm', 'i_caf')
+        for collection in bpy.data.collections:
+            if is_export_node(collection) and len(collection.objects) > 0:
+                if get_node_type(collection) in ALLOWED_NODE_TYPES:
+                    export_nodes.append(collection)
 
     return export_nodes
 
