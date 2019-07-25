@@ -160,7 +160,7 @@ def set_material_attributes(material, material_name, material_node):
     material_node.setAttribute("MatTemplate", "")
 
     bsdf = material.node_tree.nodes.get('Principled BSDF')
-    if material.use_nodes and bsdf:
+    if material.use_nodes and bsdf is not None:
         diffuse = Color(
             (bsdf.inputs['Base Color'].default_value[0],
              bsdf.inputs['Base Color'].default_value[1],
