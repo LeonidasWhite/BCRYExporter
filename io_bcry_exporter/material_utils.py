@@ -159,10 +159,31 @@ def set_material_attributes(material, material_name, material_node):
     material_node.setAttribute("SurfaceType", "")
     material_node.setAttribute("MatTemplate", "")
 
-    material_node.setAttribute("Diffuse", color_to_xml_string(material.diffuse_color))
-    material_node.setAttribute("Specular", color_to_xml_string(material.specular_color))
-    material_node.setAttribute("Opacity", str(material.alpha_threshold))
-    material_node.setAttribute("Shininess", str(1 - material.roughness))
+    bsdf = material.node_tree.nodes.get('Principled BSDF')
+    if material.use_nodes and bsdf:
+        diffuse = Color(
+            (bsdf.inputs['Base Color'].default_value[0],
+             bsdf.inputs['Base Color'].default_value[1],
+             bsdf.inputs['Base Color'].default_value[2])
+        )
+        specular = 1.0  # not support at the moment
+        opacity = bsdf.inputs['Alpha'].default_value
+        shininess = (1 - bsdf.inputs['Roughness'].default_value) * 255
+    else:
+        col = material.diffuse_color
+        diffuse = Color(
+            (material.diffuse_color[0],
+             material.diffuse_color[1],
+             material.diffuse_color[2])
+        )
+        specular = 1.0  # not support at the moment
+        opacity = material.diffuse_color[3]
+        shininess = (1 - material.roughness) * 255
+
+    material_node.setAttribute("Diffuse", color_to_xml_string(diffuse))
+    material_node.setAttribute("Specular", color_to_xml_string(specular))
+    material_node.setAttribute("Opacity", str(opacity))
+    material_node.setAttribute("Shininess", str(shininess))
 
     material_node.setAttribute("vertModifType", "0")
     material_node.setAttribute("LayerAct", "1")
@@ -379,9 +400,10 @@ def get_material_color(material, type_):
     elif type_ == "diffuse":
         col = material.diffuse_color
         color = Color((col[0], col[1], col[2]))
-        alpha = material.alpha_threshold
+        alpha = col[3]
     elif type_ == "specular":
-        color = material.specular_color
+        # specular = Color((material.metallic, material.metallic, material.metallic))
+        color = 1.0
 
     col = color_to_string(color, alpha)
     return col
@@ -389,9 +411,9 @@ def get_material_color(material, type_):
 
 def get_material_attribute(material, type_):
     if type_ == "shininess":
-        float = 1 - material.roughness
+        float = (1 - material.roughness) * 255
     elif type_ == "index_refraction":
-        float = material.alpha_threshold
+        float = material.diffuse_color[3]
 
     return str(float)
 
