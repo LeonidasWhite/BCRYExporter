@@ -121,10 +121,9 @@ class CrytekDaeAnimationExporter(export.CrytekDaeExporter):
     def _prepare_for_export(self):
         utils.clean_file()
 
-
-# -----------------------------------------------------------------------------
-# Library Animations and Clips: --> Animations, F-Curves
-# -----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
+    # Library Animations and Clips: --> Animations, F-Curves
+    # -----------------------------------------------------------------------------
 
     def _export_library_animation_clips_and_animations(
             self, libanmcl, libanm, group):
@@ -332,10 +331,10 @@ class CrytekDaeAnimationExporter(export.CrytekDaeExporter):
 
         return sampler
 
-# ---------------------------------------------------------------------
-# Library Visual Scene: --> Skeleton and _Phys bones, Bone
-#       Transformations, and Instance URL (_boneGeometry) and extras.
-# ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # Library Visual Scene: --> Skeleton and _Phys bones, Bone
+    #       Transformations, and Instance URL (_boneGeometry) and extras.
+    # ---------------------------------------------------------------------
 
     def _export_library_visual_scenes(self, visual_scene, group):
         if utils.get_animation_export_nodes():

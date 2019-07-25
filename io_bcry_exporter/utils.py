@@ -643,7 +643,7 @@ def get_export_nodes(just_selected=False):
 
     export_nodes_collection = bpy.data.collections.get("cry_export_nodes")
     if export_nodes_collection is not None:
-        
+
         for collection in bpy.data.collections:
             if is_export_node(collection) and len(collection.objects) > 0:
                 export_nodes.append(collection)
@@ -1146,17 +1146,30 @@ def get_animation_id(group):
             return "{!s}-{!s}".format(node_name, cga_name)
 
 
-def get_geometry_animation_file_name(group):
-    node_type = get_node_type(group)
-    node_name = get_node_name(group)
+def get_geometry_animation_file_name(collection):
+    node_type = get_node_type(collection)
+    node_name = get_node_name(collection)
 
-    cga_node = find_cga_node_from_anm_node(group)
+    cga_node = find_cga_node_from_anm_node(collection)
     if cga_node:
         cga_name = get_node_name(cga_node)
         return "{!s}_{!s}.anm".format(cga_name, node_name)
     else:
-        cga_name = group.objects[0].name
+        cga_name = collection.objects[0].name
         return "{!s}_{!s}.anm".format(cga_name, node_name)
+
+
+def get_cryasset_animation_file_name(collection):
+    node_type = get_node_type(collection)
+    node_name = get_node_name(collection)
+
+    cga_node = find_cga_node_from_anm_node(collection)
+    if cga_node:
+        cga_name = get_node_name(cga_node)
+        return "{!s}_{!s}.anm.cryasset".format(cga_name, node_name)
+    else:
+        cga_name = collection.objects[0].name
+        return "{!s}_{!s}.anm.cryasset".format(cga_name, node_name)
 
 
 def find_cga_node_from_anm_node(anm_group):

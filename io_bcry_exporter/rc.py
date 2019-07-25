@@ -109,20 +109,26 @@ class _DAEConverter:
     def __rename_anm_files(self, dae_path):
         output_path = os.path.dirname(dae_path)
 
-        for group in utils.get_export_nodes():
-            if utils.get_node_type(group) == 'anm':
-                node_name = utils.get_node_name(group)
-                src_name = "{}_{}".format(node_name, group.name)
+        for collection in utils.get_export_nodes():
+            if utils.get_node_type(collection) == 'anm':
+                node_name = utils.get_node_name(collection)
+                src_name = "{}_{}".format(node_name, collection.name)
                 src_name = os.path.join(output_path, src_name)
+                src_cryasset_name = "{}_{}".format(node_name, collection.name + ".cryasset")
+                src_cryasset_name = os.path.join(output_path, src_cryasset_name)
 
                 if os.path.exists(src_name):
-                    dest_name = utils.get_geometry_animation_file_name(group)
+                    dest_name = utils.get_geometry_animation_file_name(collection)
                     dest_name = os.path.join(output_path, dest_name)
+                    dest_cryasset_name = utils.get_cryasset_animation_file_name(collection)
+                    dest_cryasset_name = os.path.join(output_path, dest_cryasset_name)
 
                     if os.path.exists(dest_name):
                         os.remove(dest_name)
+                        os.remove(dest_cryasset_name)
 
                     os.rename(src_name, dest_name)
+                    os.rename(src_cryasset_name, dest_cryasset_name)
 
     def __get_mtl_files_in_directory(self, directory):
         MTL_MATCH_STRING = "*.{!s}".format("mtl")
