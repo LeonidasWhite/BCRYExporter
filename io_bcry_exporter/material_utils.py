@@ -159,18 +159,21 @@ def set_material_attributes(material, material_name, material_node):
     material_node.setAttribute("SurfaceType", "")
     material_node.setAttribute("MatTemplate", "")
 
-    bsdf = material.node_tree.nodes.get('Principled BSDF')
-    if material.use_nodes and bsdf is not None:
-        diffuse = Color(
-            (bsdf.inputs['Base Color'].default_value[0],
-             bsdf.inputs['Base Color'].default_value[1],
-             bsdf.inputs['Base Color'].default_value[2])
-        )
-        specular = 1.0  # not support at the moment
-        opacity = bsdf.inputs['Alpha'].default_value
-        shininess = (1 - bsdf.inputs['Roughness'].default_value) * 255
-    else:
-        col = material.diffuse_color
+    use_default = True
+    if material.use_nodes:
+        bsdf = material.node_tree.nodes.get('Principled BSDF')
+        if bsdf is not None:
+            diffuse = Color(
+                (bsdf.inputs['Base Color'].default_value[0],
+                 bsdf.inputs['Base Color'].default_value[1],
+                 bsdf.inputs['Base Color'].default_value[2])
+            )
+            specular = 1.0  # not support at the moment
+            opacity = bsdf.inputs['Alpha'].default_value
+            shininess = (1 - bsdf.inputs['Roughness'].default_value) * 255
+            use_default = False
+
+    if use_default:
         diffuse = Color(
             (material.diffuse_color[0],
              material.diffuse_color[1],

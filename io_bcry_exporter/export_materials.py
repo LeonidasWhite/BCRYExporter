@@ -83,9 +83,9 @@ class CrytekMaterialExporter:
         if self._config.convert_textures:
             material_utils.convert_image_to_dds(images, self._config)
 
-# ------------------------------------------------------------------------------
-# Library Effects:
-# ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Library Effects:
+    # ------------------------------------------------------------------------------
 
     def export_library_effects(self, library_effects):
         for material_name, material in self._materials.items():
