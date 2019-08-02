@@ -3644,14 +3644,13 @@ class BCRY_PT_cry_utilities_panel(View3DPanel, Panel):
     def draw(self, context):
         layout = self.layout
         col = layout.column(align=True)
+        proxy_props = context.scene.proxy_props
 
-        # predefine variables for prop
-        if context.scene.proxy_props.bAdvanced:
-            bAdvanced = context.scene.proxy_props.bAdvanced
-            bChild = context.scene.proxy_props.bChild
-            bSeparate = context.scene.proxy_props.bSeparate
+        # predefine variables for props
+        if proxy_props.bAdvanced:
+            bChild = proxy_props.bChild
+            bSeparate = proxy_props.bSeparate
         else:
-            bAdvanced = False
             bChild = False
             bSeparate = False
 
@@ -3699,20 +3698,20 @@ class BCRY_PT_cry_utilities_panel(View3DPanel, Panel):
         row = col.row()
         row.separator()
 
-        if context.scene.proxy_props.bAdvanced:
+        if proxy_props.bAdvanced:
             icon = 'UNLOCKED'
         else:
             icon = 'LOCKED'
 
         row = col.row()
-        row.prop(context.scene.proxy_props, "bAdvanced", toggle=True, icon=icon)
+        row.prop(proxy_props, "bAdvanced", toggle=True, icon=icon)
 
-        if context.scene.proxy_props.bAdvanced:
+        if proxy_props.bAdvanced:
             row = col.row()
-            row.prop(context.scene.proxy_props, "bChild")
+            row.prop(proxy_props, "bChild")
             row = col.row()
             if context.mode == 'OBJECT':
-                row.prop(context.scene.proxy_props, "bSeparate")
+                row.prop(proxy_props, "bSeparate")
 
         col.separator()
         col.separator()
@@ -4017,33 +4016,52 @@ class BCRY_MT_add_physics_proxy_menu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
 
+        proxy_props = context.scene.proxy_props
+
+        # predefine variables for props
+        if proxy_props.bAdvanced:
+            bChild = proxy_props.bChild
+            bSeparate = proxy_props.bSeparate
+        else:
+            bChild = False
+            bSeparate = False
+
         layout.label(text="Proxies")
         add_box_proxy = layout.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Box",
             icon="META_CUBE")
         add_box_proxy.type_ = "box"
+        add_box_proxy.child_ = bChild
+
         add_capsule_proxy = layout.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Capsule",
             icon="META_ELLIPSOID")
         add_capsule_proxy.type_ = "capsule"
+        add_capsule_proxy.child_ = bChild
+
         add_cylinder_proxy = layout.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Cylinder",
             icon="META_CAPSULE")
         add_cylinder_proxy.type_ = "cylinder"
+        add_cylinder_proxy.child_ = bChild
+
         add_sphere_proxy = layout.operator(
             BCRY_OT_add_proxy.
             bl_idname,
             text="Sphere",
             icon="META_BALL")
         add_sphere_proxy.type_ = "sphere"
-        add_notaprim_proxy = layout.operator(
-            BCRY_OT_add_proxy.bl_idname,
-            text="Not a prim",
+        add_sphere_proxy.child_ = bChild
+
+        add_mesh_proxy = layout.operator(
+            BCRY_OT_add_mesh_proxy.bl_idname,
+            text="Mesh",
             icon="MESH_CUBE")
-        add_notaprim_proxy.type_ = "notaprim"
+        add_mesh_proxy.child_ = bChild
+        add_mesh_proxy.separate_ = bSeparate
 
 
 class BCRY_MT_cry_utilities_menu(bpy.types.Menu):
