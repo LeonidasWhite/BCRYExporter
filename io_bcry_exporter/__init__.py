@@ -942,6 +942,11 @@ class BCRY_OT_add_branch(bpy.types.Operator):
     bl_idname = "bcry.add_branch"
 
     def execute(self, context):
+        """Set the Master collection(Scene) active, prevent errors when
+        object doesn't create if current active scene is hide"""
+        x = bpy.context.view_layer.layer_collection
+        bpy.context.view_layer.active_layer_collection = x
+
         active_object = bpy.context.active_object
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_vert_coordinates = get_vertex_data()
@@ -953,14 +958,19 @@ class BCRY_OT_add_branch(bpy.types.Operator):
                 type='EMPTY',
                 enter_editmode=False,
                 align="WORLD",
-                location=(
-                    selected_vert[0],
-                    selected_vert[1],
-                    selected_vert[2]
-                )
+                location=(selected_vert[0],
+                          selected_vert[1],
+                          selected_vert[2])
             )
             empty_object = bpy.context.active_object
             empty_object.name = name_branch(True)
+
+            # add empty object to active_object collection
+            empty_object.users_collection[0].objects.unlink(empty_object)
+            active_object.users_collection[0].objects.link(empty_object)
+            # make parent
+            empty_object.parent = active_object
+
             utils.set_active(active_object)
             bpy.ops.object.mode_set(mode='EDIT')
 
