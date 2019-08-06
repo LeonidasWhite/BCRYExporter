@@ -10,11 +10,12 @@ Copy `io_bcry_exporter` folder to blender_path\Scripts\Addons directory.
 
 <b>Tested:</b>
 1) Export static geometry (support box, sphere, capsule, cylinder and mesh collision types). (see example)
-2) Export skeleton(chr), skeleton radgoll settings, skin.
-3) Export Animated Mesh (CGA) with single or multiple animations. (see example)
-4) Export branch for touch vegetation. (see example)
-3) Export animation through Limit with Values.
-4) All other utilities (Export, configuration, bone utilities, mesh utilities, material utilities, UDP).
+2) Export usual and custom normal shading for objects. (see example)
+3) Export skeleton(chr), skeleton radgoll settings, skin.
+4) Export Animated Mesh (CGA) with single or multiple animations. (see example)
+5) Export branch for touch vegetation. (see example)
+6) Export animation through Limit with Values.
+7) All other utilities (Export, configuration, bone utilities, mesh utilities, material utilities, UDP).
 
 <b>Not tested but must work:</b>
 1) Export breakable joint
