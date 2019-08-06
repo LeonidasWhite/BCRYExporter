@@ -28,8 +28,10 @@ Copy `io_bcry_exporter` folder to blender_path\Scripts\Addons directory.
 <b>Menu</b>: Blender 2.80 has Quick Favorite menu which called by "Q" key. But there is not way to add to quick favorite from python code. I added this menu in Configuration section. You can do right mouse click on them and set "Add to Quick favorite".
 
 <b>About Mesh collision</b>: Now when you click to create Mesh button (in Cry Utilities):
+
 In Object Mode:
 1) Will be create the same mesh with wire display type. You can use separate checkbox in advanced options menu to separate new mesh into loose parts. (Multiple selected objects support)
+
 In Edit mode:
 1) Blender now supports multiedit by core. You can select many objects and change mode to EDIT. Then you can select through link (key 'L') a part of this mesh and click Mesh button to separate selected part as a mesh collision. Multiple selected meshes supports too. The current mode state will be save. The objects without selected vertices will be ignored.
 
