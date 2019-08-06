@@ -223,7 +223,7 @@ def add_textures(_doc, material, material_node, _config):
         if "physProxyNoDraw" != get_material_physic(material.name):
             texture_node = _doc.createElement('Texture')
             texture_node.setAttribute("Map", "Diffuse")
-            path = "textures/defaults/white.dds"
+            path = "%engine%/engineassets/textures/white.dds"
             texture_node.setAttribute("File", path)
             textures_node.appendChild(texture_node)
             bcPrint("Diffuse Path: {}.".format(path))

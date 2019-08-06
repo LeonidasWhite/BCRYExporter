@@ -422,7 +422,7 @@ class BCRY_OT_selected_to_cry_export_nodes(bpy.types.Operator):
 
     def execute(self, context):
         selected = bpy.context.selected_objects
-        
+
         # Get or create global collection which contains all created export nodes
         export_node_collection = bpy.data.collections.get("cry_export_nodes")
         if export_node_collection is None:
@@ -617,6 +617,7 @@ class BCRY_OT_add_proxy(bpy.types.Operator):
     bl_idname = "bcry.add_proxy"
 
     type_: StringProperty()
+    child_: BoolProperty()
 
     def execute(self, context):
         # Create proxy for list of objects
@@ -625,6 +626,7 @@ class BCRY_OT_add_proxy(bpy.types.Operator):
         for obj in context.selected_objects:
             self.__add_proxy(obj)
             save_objs.append(obj)
+
         # Return selection
         for obj in save_objs:
             obj.select_set(True)
@@ -641,15 +643,22 @@ class BCRY_OT_add_proxy(bpy.types.Operator):
         old_cursor = bpy.context.scene.cursor.location.copy()
         bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="BOUNDS")
         bpy.ops.object.select_all(action="DESELECT")
+
         bpy.ops.mesh.primitive_cube_add()
         bound_box = bpy.context.active_object
         bound_box.name = "{}_{}-proxy".format(object_.name, getattr(self, "type_"))
         bound_box.display_type = "WIRE"
+
         bound_box.dimensions = object_.dimensions
         bound_box.location = object_.location
         bound_box.rotation_euler = object_.rotation_euler
-        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         bpy.ops.mesh.uv_texture_add()
+
+        # if child True: don't apply rotation, fix wrong rotation when clear transform
+        if self.child_:
+            bpy.ops.object.transform_apply(location=True, rotation=False, scale=True)
+        else:
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
         name = "proxy"
         if name in bpy.data.materials:
@@ -677,8 +686,155 @@ class BCRY_OT_add_proxy(bpy.types.Operator):
         object_.users_collection[0].objects.link(bound_box)
         bpy.ops.object.select_all(action="DESELECT")
 
+        if self.child_:
+            bound_box.parent = object_
+            # clear local offset
+            bound_box.location = (0, 0, 0)
+            bound_box.rotation_euler = (0, 0, 0)
+            bound_box.scale = (1, 1, 1)
+
     def invoke(self, context, event):
         if context.object is None or context.object.type != "MESH" or context.object.mode != "OBJECT":
+            self.report({'ERROR'}, "Select a mesh in OBJECT mode.")
+            return {'FINISHED'}
+
+        return self.execute(context)
+
+
+class BCRY_OT_add_mesh_proxy(bpy.types.Operator):
+    '''Click to add proxy to selected mesh. The proxy will always display as a box but will \
+    be converted to the selected shape in CryEngine.'''
+    bl_label = "Add Mesh Proxy"
+    bl_idname = "bcry.add_mesh_proxy"
+
+    child_: BoolProperty()
+    separate_: BoolProperty()
+
+    def execute(self, context):
+        # Create proxy for list of objects
+        save_objs = []
+        active_object = bpy.context.view_layer.objects.active
+        save_mode = 'OBJECT'
+        if context.mode == 'EDIT_MESH':
+            for obj in context.selected_objects:
+                self.__add_separate_proxy(obj)
+                save_objs.append(obj)
+            save_mode = 'EDIT'
+        else:
+            for obj in context.selected_objects:
+                self.__add_object_proxy(obj)
+                save_objs.append(obj)
+
+        # Return selection
+        for obj in save_objs:
+            obj.select_set(True)
+        utils.set_active(active_object)
+
+        # return viewport mode
+        bpy.ops.object.mode_set(mode=save_mode)
+        message = "Adding mesh proxy to active object"
+        self.report({'INFO'}, message)
+        return {'FINISHED'}
+
+    def __add_object_proxy(self, object_):
+        bpy.ops.object.select_all(action="DESELECT")
+        object_.select_set(True)
+        utils.set_active(object_)
+
+        # duplicate current object
+        bpy.ops.object.duplicate()
+
+        mesh_collision = bpy.context.active_object
+        mesh_collision.name = "{}_{}-proxy".format(object_.name, "mesh")
+        mesh_collision.display_type = "WIRE"
+
+        # destroy seam and sharp edges
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.mark_sharp(clear=True)
+        bpy.ops.mesh.mark_seam(clear=True)
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # clear materials
+        mesh_collision.data.materials.clear()
+        name = "proxy"
+        if name in bpy.data.materials:
+            proxy_material = bpy.data.materials[name]
+        else:
+            proxy_material = bpy.data.materials.new(name)
+
+        mesh_collision.data.materials.append(proxy_material)
+        mesh_collision['phys_proxy'] = "notaprim"
+
+        # if child - add as child and clear local offset
+        if self.child_:
+            mesh_collision.parent = object_
+            mesh_collision.location = (0, 0, 0)
+            mesh_collision.rotation_euler = (0, 0, 0)
+            mesh_collision.scale = (1, 1, 1)
+
+        # separate if option True
+        if self.separate_:
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.mesh.separate(type='LOOSE')
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+        bpy.ops.object.select_all(action="DESELECT")
+
+    def __add_separate_proxy(self, object_):
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action="DESELECT")
+        object_.select_set(True)
+
+        # find selected vertices - if false: ignore
+        if any(v.select for v in object_.data.vertices):
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.duplicate()
+            bpy.ops.mesh.separate(type='SELECTED')
+            bpy.ops.object.mode_set(mode='OBJECT')
+        else:
+            return
+
+        # select collision
+        object_.select_set(False)
+        mesh_collision = bpy.context.selected_objects[0]
+        utils.set_active(mesh_collision)
+
+        # set proxy name
+        mesh_collision.name = "{}_{}-proxy".format(object_.name, "mesh")
+        mesh_collision.display_type = "WIRE"
+
+        # destroy seam and sharp edges
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.mark_sharp(clear=True)
+        bpy.ops.mesh.mark_seam(clear=True)
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # clear materials
+        mesh_collision.data.materials.clear()
+        name = "proxy"
+        if name in bpy.data.materials:
+            proxy_material = bpy.data.materials[name]
+        else:
+            proxy_material = bpy.data.materials.new(name)
+
+        mesh_collision.data.materials.append(proxy_material)
+        mesh_collision['phys_proxy'] = "notaprim"
+        bpy.ops.object.select_all(action="DESELECT")
+
+        # if child - add as child and clear local offset
+        if self.child_:
+            mesh_collision.parent = object_
+            mesh_collision.location = (0, 0, 0)
+            mesh_collision.rotation_euler = (0, 0, 0)
+            mesh_collision.scale = (1, 1, 1)
+
+    def invoke(self, context, event):
+        if context.object is None or context.object.type != "MESH" or context.object.mode not in ["OBJECT", "EDIT"]:
             self.report({'ERROR'}, "Select a mesh in OBJECT mode.")
             return {'FINISHED'}
 
@@ -786,10 +942,15 @@ class BCRY_OT_add_branch(bpy.types.Operator):
     bl_idname = "bcry.add_branch"
 
     def execute(self, context):
+        """Set the Master collection(Scene) active, prevent errors when
+        object doesn't create if current active scene is hide"""
+        x = bpy.context.view_layer.layer_collection
+        bpy.context.view_layer.active_layer_collection = x
+
         active_object = bpy.context.active_object
         bpy.ops.object.mode_set(mode='OBJECT')
         selected_vert_coordinates = get_vertex_data()
-        
+
         if (selected_vert_coordinates):
             selected_vert = selected_vert_coordinates[0]
             bpy.ops.object.add(
@@ -797,14 +958,19 @@ class BCRY_OT_add_branch(bpy.types.Operator):
                 type='EMPTY',
                 enter_editmode=False,
                 align="WORLD",
-                location=(
-                    selected_vert[0],
-                    selected_vert[1],
-                    selected_vert[2]
-                )
+                location=(selected_vert[0],
+                          selected_vert[1],
+                          selected_vert[2])
             )
             empty_object = bpy.context.active_object
             empty_object.name = name_branch(True)
+
+            # add empty object to active_object collection
+            empty_object.users_collection[0].objects.unlink(empty_object)
+            active_object.users_collection[0].objects.link(empty_object)
+            # make parent
+            empty_object.parent = active_object
+
             utils.set_active(active_object)
             bpy.ops.object.mode_set(mode='EDIT')
 
@@ -3488,6 +3654,15 @@ class BCRY_PT_cry_utilities_panel(View3DPanel, Panel):
     def draw(self, context):
         layout = self.layout
         col = layout.column(align=True)
+        proxy_props = context.scene.proxy_props
+
+        # predefine variables for props
+        if proxy_props.bAdvanced:
+            bChild = proxy_props.bChild
+            bSeparate = proxy_props.bSeparate
+        else:
+            bChild = False
+            bSeparate = False
 
         col.label(text="Add Physics Proxy", icon="NDOF_TURN")
         col.separator()
@@ -3498,12 +3673,14 @@ class BCRY_PT_cry_utilities_panel(View3DPanel, Panel):
             text="Box",
             icon="META_CUBE")
         add_box_proxy.type_ = "box"
+        add_box_proxy.child_ = bChild
 
         add_capsule_proxy = row.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Capsule",
             icon="META_CAPSULE")
         add_capsule_proxy.type_ = "capsule"
+        add_capsule_proxy.child_ = bChild
 
         row = col.row(align=True)
         add_cylinder_proxy = row.operator(
@@ -3511,17 +3688,40 @@ class BCRY_PT_cry_utilities_panel(View3DPanel, Panel):
             text="Cylinder",
             icon="META_ELLIPSOID")
         add_cylinder_proxy.type_ = "cylinder"
+        add_cylinder_proxy.child_ = bChild
+
         add_sphere_proxy = row.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Sphere",
             icon="META_BALL")
         add_sphere_proxy.type_ = "sphere"
+        add_sphere_proxy.child_ = bChild
+
         row = col.row(align=True)
-        add_notaprim_proxy = row.operator(
-            BCRY_OT_add_proxy.bl_idname,
-            text="Not a prim",
+        add_mesh_proxy = row.operator(
+            BCRY_OT_add_mesh_proxy.bl_idname,
+            text="Mesh",
             icon="META_ELLIPSOID")
-        add_notaprim_proxy.type_ = "notaprim"
+        add_mesh_proxy.child_ = bChild
+        add_mesh_proxy.separate_ = bSeparate
+
+        row = col.row()
+        row.separator()
+
+        if proxy_props.bAdvanced:
+            icon = 'UNLOCKED'
+        else:
+            icon = 'LOCKED'
+
+        row = col.row()
+        row.prop(proxy_props, "bAdvanced", toggle=True, icon=icon)
+
+        if proxy_props.bAdvanced:
+            row = col.row()
+            row.prop(proxy_props, "bChild")
+            row = col.row()
+            if context.mode == 'OBJECT':
+                row.prop(proxy_props, "bSeparate")
 
         col.separator()
         col.separator()
@@ -3725,16 +3925,16 @@ class BCRY_PT_export_panel(View3DPanel, Panel):
         col = layout.column(align=True)
 
         col.operator(
-            BCRY_OT_export_animations.bl_idname, 
-            text="Export Animations", 
+            BCRY_OT_export_animations.bl_idname,
+            text="Export Animations",
             icon="RENDER_ANIMATION")
         col.separator()
         col.operator(
-            BCRY_OT_quick_export.bl_idname, 
-            text="Quick Export", 
+            BCRY_OT_quick_export.bl_idname,
+            text="Quick Export",
             icon_value=bcry_icons["crye"].icon_id)
         col.operator(
-            BCRY_OT_export.bl_idname, 
+            BCRY_OT_export.bl_idname,
             text="Export to CryEngine",
             icon_value=bcry_icons["crye"].icon_id)
         col.separator()
@@ -3826,33 +4026,52 @@ class BCRY_MT_add_physics_proxy_menu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
 
+        proxy_props = context.scene.proxy_props
+
+        # predefine variables for props
+        if proxy_props.bAdvanced:
+            bChild = proxy_props.bChild
+            bSeparate = proxy_props.bSeparate
+        else:
+            bChild = False
+            bSeparate = False
+
         layout.label(text="Proxies")
         add_box_proxy = layout.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Box",
             icon="META_CUBE")
         add_box_proxy.type_ = "box"
+        add_box_proxy.child_ = bChild
+
         add_capsule_proxy = layout.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Capsule",
             icon="META_ELLIPSOID")
         add_capsule_proxy.type_ = "capsule"
+        add_capsule_proxy.child_ = bChild
+
         add_cylinder_proxy = layout.operator(
             BCRY_OT_add_proxy.bl_idname,
             text="Cylinder",
             icon="META_CAPSULE")
         add_cylinder_proxy.type_ = "cylinder"
+        add_cylinder_proxy.child_ = bChild
+
         add_sphere_proxy = layout.operator(
             BCRY_OT_add_proxy.
             bl_idname,
             text="Sphere",
             icon="META_BALL")
         add_sphere_proxy.type_ = "sphere"
-        add_notaprim_proxy = layout.operator(
-            BCRY_OT_add_proxy.bl_idname,
-            text="Not a prim",
+        add_sphere_proxy.child_ = bChild
+
+        add_mesh_proxy = layout.operator(
+            BCRY_OT_add_mesh_proxy.bl_idname,
+            text="Mesh",
             icon="MESH_CUBE")
-        add_notaprim_proxy.type_ = "notaprim"
+        add_mesh_proxy.child_ = bChild
+        add_mesh_proxy.separate_ = bSeparate
 
 
 class BCRY_MT_cry_utilities_menu(bpy.types.Menu):
@@ -4114,11 +4333,37 @@ class BCRY_OT_remove_unused_vertex_groups(bpy.types.Operator):
 
 
 # ------------------------------------------------------------------------------
+# PropertyGroups:
+# ------------------------------------------------------------------------------
+
+
+class BCRY_ProxyProperties(bpy.types.PropertyGroup):
+    bAdvanced: BoolProperty(
+        name="Advanced Options",
+        description="Activate Advanced Options",
+        default=False
+    )
+    bChild: BoolProperty(
+        name="as a Child (for CGA)",
+        description="Make new proxy as a child?",
+        default=False
+    )
+    bSeparate: BoolProperty(
+        name="Separate (Only for Mesh)",
+        description="Do separate the object?",
+        default=False
+    )
+
+
+# ------------------------------------------------------------------------------
 # Registration:
 # ------------------------------------------------------------------------------
 
+
 def get_classes_to_register():
     classes = (
+        BCRY_ProxyProperties,
+
         BCRY_OT_find_rc,
         BCRY_OT_find_rc_for_texture_conversion,
         BCRY_OT_select_game_directory,
@@ -4139,6 +4384,7 @@ def get_classes_to_register():
         BCRY_OT_add_locator_locomotion,
         BCRY_OT_add_primitive_mesh,
         BCRY_OT_add_proxy,
+        BCRY_OT_add_mesh_proxy,
         BCRY_OT_add_breakable_joint,
         BCRY_OT_add_branch,
         BCRY_OT_add_branch_joint,
@@ -4237,6 +4483,7 @@ def register():
 
     bpy.types.MATERIAL_MT_context_menu.append(physics_menu)
     bpy.types.MESH_MT_vertex_group_context_menu.append(remove_unused_vertex_groups)
+    bpy.types.Scene.proxy_props = bpy.props.PointerProperty(type=BCRY_ProxyProperties)
 
 
 def unregister():
@@ -4248,6 +4495,7 @@ def unregister():
 
     bpy.types.MATERIAL_MT_context_menu.remove(physics_menu)
     bpy.types.MESH_MT_vertex_group_context_menu.remove(remove_unused_vertex_groups)
+    del bpy.types.Scene.proxy_props
 
 if __name__ == "__main__":
     register()

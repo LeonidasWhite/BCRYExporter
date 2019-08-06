@@ -1434,7 +1434,7 @@ def get_bounding_box(object_):
     vmin = Vector()
     vmax = Vector()
     if object_.type == 'EMPTY':
-        k = object_.empty_draw_size
+        k = object_.empty_display_size
         vmax = Vector((k, k, k))
         vmin = Vector((-k, -k, -k))
     elif object_.type == 'MESH':
