@@ -281,57 +281,78 @@ class BCRY_OT_add_cry_animation_node(bpy.types.Operator):
         name="Type",
         items=(
             ("anm", "ANM", "Geometry Animation"),
-            ("i_caf", "I_CAF", "Character Animation"),
-        ),
-        default="i_caf",
-    )
+            ("i_caf", "I_CAF", "Character Animation")),
+        default="i_caf")
     node_name: StringProperty(name="Animation Name")
+    mode: EnumProperty(
+        name="Mode",
+        items=(
+            ("Manual", "Manual", ''),
+            ("Auto", "Auto", '')),
+        default="Manual")
     range_type: EnumProperty(
         name="Range Type",
         items=(
             ("Timeline", "Timeline Editor", desc.list['range_timeline']),
             ("Values", "Limit with Values", desc.list['range_values']),
-            ("Markers", "Limit with Markers", desc.list['range_markers']),
-        ),
-        default="Timeline",
-    )
+            ("Markers", "Limit with Markers", desc.list['range_markers'])),
+        default="Timeline")
     node_start: IntProperty(name="Start Frame")
     node_end: IntProperty(name="End Frame")
     start_m_name: StringProperty(name="Marker Start Name")
     end_m_name: StringProperty(name="Marker End Name")
+    start_m_name_auto: StringProperty(name="Start")
+    end_m_name_auto: StringProperty(name="End")
 
     def draw(self, context):
         layout = self.layout
         col = layout.column()
         col.prop(self, "node_type")
-        col.prop(self, "node_name")
-        col.separator()
-        col.label(text="Range Type:")
 
-        col.prop(self, "range_type", expand=True)
-        col.separator()
-        col.separator()
-
-        col.label(text="Animation Range Values:")
-        col.prop(self, "node_start")
-        col.prop(self, "node_end")
-        col.separator()
+        if self.node_type == 'i_caf':
+            col.label(text="Mode:")
+            row = col.row()
+            row.prop(self, "mode", expand=True)
         col.separator()
 
-        col.label(text="Animation Range Markers:")
-        col.prop(self, "start_m_name")
-        col.prop(self, "end_m_name")
+        if self.mode == 'Manual':
+            col.prop(self, "node_name")
+        col.separator()
+
+        if self.mode == 'Manual' or self.node_type == "anm":
+            col.label(text="Range Type:")
+
+            col.prop(self, "range_type", expand=True)
+            col.separator()
+            col.separator()
+
+            col.label(text="Animation Range Values:")
+            col.prop(self, "node_start")
+            col.prop(self, "node_end")
+            col.separator()
+            col.separator()
+
+            col.label(text="Animation Range Markers:")
+            col.prop(self, "start_m_name")
+            col.prop(self, "end_m_name")
+
+        if self.mode == 'Auto':
+            col.label(text="Marker`s Name Ends:")
+            col.prop(self, "start_m_name_auto")
+            col.prop(self, "end_m_name_auto")
 
     def __init__(self):
         # bpy.ops.object.mode_set(mode='OBJECT')
-
-        self.node_start = bpy.context.scene.frame_start
-        self.node_end = bpy.context.scene.frame_end
-
         if bpy.context.active_object.type == 'ARMATURE':
             self.node_type = 'i_caf'
         else:
             self.node_type = 'anm'
+
+        self.node_start = bpy.context.scene.frame_start
+        self.node_end = bpy.context.scene.frame_end
+
+        self.start_m_name_auto = ""
+        self.end_m_name_auto = "_E"
 
         tm = bpy.context.scene.timeline_markers
         for marker in tm:
@@ -353,39 +374,105 @@ class BCRY_OT_add_cry_animation_node(bpy.types.Operator):
         object_ = bpy.context.active_object
         scene = context.scene
         if object_:
-            node_start = None
-            node_end = None
+            if self.mode == 'Auto':
+                self.__auto(object_, scene)
+            else:
+                self.__manual(object_, scene)
 
-            start_name = "{}_Start".format(self.node_name)
-            end_name = "{}_End".format(self.node_name)
+            message = "Adding Export Node"
+        else:
+            message = "There is no a active armature! Please select a armature."
 
-            if self.range_type == 'Values':
-                node_start = self.node_start
-                node_end = self.node_end
+        self.report({"INFO"}, message)
+        return {"FINISHED"}
 
-                object_[start_name] = node_start
-                object_[end_name] = node_end
+    def __manual(self, object_, scene):
+        node_start = None
+        node_end = None
 
-            elif self.range_type == 'Markers':
-                node_start = self.start_m_name
-                node_end = self.end_m_name
+        start_name = "{}_Start".format(self.node_name)
+        end_name = "{}_End".format(self.node_name)
 
-                tm = bpy.context.scene.timeline_markers
-                if tm.find(self.start_m_name) == -1:
-                    tm.new(name=self.start_m_name, frame=self.node_start)
-                if tm.find(self.end_m_name) == -1:
-                    tm.new(name=self.end_m_name, frame=self.node_end)
+        if self.range_type == 'Values':
+            node_start = self.node_start
+            node_end = self.node_end
 
-                object_[start_name] = node_start
-                object_[end_name] = node_end
+            object_[start_name] = node_start
+            object_[end_name] = node_end
 
-            export_node = bpy.data.collections.get("cry_export_nodes")
-            # Create global collection which contains all created export nodes
-            if export_node is None:
-                export_node = bpy.data.collections.new("cry_export_nodes")
-                scene.collection.children.link(export_node)
+        elif self.range_type == 'Markers':
+            node_start = self.start_m_name
+            node_end = self.end_m_name
 
-            node_name = "{}.{}".format(self.node_name, self.node_type)
+            tm = bpy.context.scene.timeline_markers
+            if tm.find(self.start_m_name) == -1:
+                tm.new(name=self.start_m_name, frame=self.node_start)
+            if tm.find(self.end_m_name) == -1:
+                tm.new(name=self.end_m_name, frame=self.node_end)
+
+            object_[start_name] = node_start
+            object_[end_name] = node_end
+
+        export_node = bpy.data.collections.get("cry_export_nodes")
+        # Create global collection which contains all created export nodes
+        if export_node is None:
+            export_node = bpy.data.collections.new("cry_export_nodes")
+            scene.collection.children.link(export_node)
+
+        node_name = "{}.{}".format(self.node_name, self.node_type)
+        collection = bpy.data.collections.get(node_name)
+        if collection is None:
+            collection = bpy.data.collections.new(node_name)
+            export_node.children.link(collection)
+            collection.objects.link(object_)
+        else:
+            for obj in bpy.context.selected_objects:
+                if obj.name not in collection.objects:
+                    collection.objects.link(obj)
+
+    def __auto(self, object_, scene):
+        node_start = None
+        node_end = None
+        node_name = None
+        marker_groups = []
+        self.node_type = 'i_caf'
+        tm = bpy.context.scene.timeline_markers
+
+        for marker in tm.values():
+            start_marker = None
+            end_marker = None
+            if not marker.name.endswith(self.end_m_name_auto):
+                if self.start_m_name_auto != "":
+                    if marker.name.endswith(self.start_m_name_auto):
+                        start_marker = marker
+                        node_name = marker.name[:-len(self.start_m_name_auto)]  # strip start marker name suffix
+                        end_marker = tm.get('{}{}'.format(node_name, self.end_m_name_auto))  # try to get end marker
+                else:
+                    node_name = marker.name
+                    start_marker = marker
+                    end_marker = tm.get('{}{}'.format(marker.name, self.end_m_name_auto))  # try to get end marker
+
+                if start_marker and end_marker:
+                    marker_groups.append((start_marker.frame, end_marker.frame, node_name))
+
+        export_node = bpy.data.collections.get("cry_export_nodes")
+        # Create global collection which contains all created export nodes
+        if export_node is None:
+            export_node = bpy.data.collections.new("cry_export_nodes")
+            scene.collection.children.link(export_node)
+
+        for marker in marker_groups:
+            node_start = marker[0]
+            node_end = marker[1]
+            node_name = marker[2]
+
+            start_name = "{}_Start".format(node_name)
+            end_name = "{}_End".format(node_name)
+
+            object_[start_name] = node_start
+            object_[end_name] = node_end
+
+            node_name = "{}.{}".format(node_name, self.node_type)
             collection = bpy.data.collections.get(node_name)
             if collection is None:
                 collection = bpy.data.collections.new(node_name)
@@ -395,13 +482,6 @@ class BCRY_OT_add_cry_animation_node(bpy.types.Operator):
                 for obj in bpy.context.selected_objects:
                     if obj.name not in collection.objects:
                         collection.objects.link(obj)
-
-            message = "Adding Export Node"
-        else:
-            message = "There is no a active armature! Please select a armature."
-
-        self.report({"INFO"}, message)
-        return {"FINISHED"}
 
     def invoke(self, context, event):
         object_ = bpy.context.active_object
