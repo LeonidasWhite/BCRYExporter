@@ -174,9 +174,8 @@ def get_bmesh(object_, apply_modifiers=False):
 
     bcry_split_modifier(object_)
 
-    depsgraph = bpy.context.evaluated_depsgraph_get()    
+    depsgraph = bpy.context.evaluated_depsgraph_get()
     bpy.ops.object.mode_set(mode='EDIT')
-    
 
     if apply_modifiers:
         object_eval = object_.evaluated_get(depsgraph)
@@ -188,16 +187,15 @@ def get_bmesh(object_, apply_modifiers=False):
         mesh = object_.to_mesh()
         bmesh_ = bmesh.new()
         bmesh_.from_mesh(mesh)
-        
+
     return bmesh_
 
 
 def clear_bmesh(object_, bmesh_):
-    
     bpy.ops.object.mode_set(mode='OBJECT')
     remove_bcry_split_modifier(object_)
     object_.to_mesh_clear()
-    
+
 
 def bcry_split_modifier(object_):
     if object_.data.use_auto_smooth:
@@ -370,7 +368,7 @@ def get_joint_name(object_, index=1):
 
 
 def rebuild_armature(armature):
-    """ Try to re-create new armature bone to bone 
+    """ Try to re-create new armature bone to bone
     for fix wrong export bone positions and hierarchy"""
     old_bones = []
     new_bones = []
@@ -409,7 +407,7 @@ def rebuild_armature(armature):
         if len(old_bones[i].items()) > 0:
             for p in old_bones[i].items():
                 new_bones[i][p[0]] = p[1]
-    
+
     for bone in edit_bones:
         if bone.name.endswith("+old"):
             if bone.parent is not None:
@@ -418,10 +416,9 @@ def rebuild_armature(armature):
                 split_name = bone.parent.name.split("+")
                 parent_name = split_name[0]
                 edit_bones[temp_name].parent = edit_bones[parent_name]
-                
 
     for i in range(bones_count):
-       edit_bones.remove(old_bones[i])
+        edit_bones.remove(old_bones[i])
 
     bpy.ops.object.mode_set(mode="OBJECT")
 
