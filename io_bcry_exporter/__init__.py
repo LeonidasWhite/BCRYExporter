@@ -2549,6 +2549,9 @@ class BCRY_OT_add_primitive_mesh(bpy.types.Operator):
             self.report({'ERROR'}, "Please select a armature object!")
             return {'FINISHED'}
 
+        x = bpy.context.view_layer.layer_collection
+        bpy.context.view_layer.active_layer_collection = x
+
         bpy.ops.mesh.primitive_plane_add()
         triangle = bpy.context.active_object
 
@@ -2587,6 +2590,17 @@ class BCRY_OT_add_primitive_mesh(bpy.types.Operator):
             bpy.ops.object.material_slot_add()
             if triangle.material_slots:
                 triangle.material_slots[0].material = material_
+
+        if len(triangle.users_collection) > 0:
+            for c in triangle.users_collection:
+                c.objects.unlink(triangle)
+
+        for c in armature.users_collection:
+            if not utils.is_export_node(c):
+                c.objects.link(triangle)
+                break
+
+        utils.set_active(triangle)
 
         return {'FINISHED'}
 
