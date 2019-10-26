@@ -301,7 +301,8 @@ class CrytekDaeExporter:
             else:
                 for vert in bmesh_.verts:
                     loop = vert.link_loops[0]
-                    float_colors.extend(loop[active_layer])
+                    color = loop[active_layer]
+                    float_colors.extend([color[0], color[1], color[2]])
 
         if float_colors:
             id_ = "{!s}-vcol".format(geometry_name)
