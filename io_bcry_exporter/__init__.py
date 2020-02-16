@@ -3758,7 +3758,7 @@ class BCRY_PT_cry_utilities_panel(View3DPanel, Panel):
             bChild = False
             bSeparate = False
 
-        col.label(text="Add Physics Proxy", icon="NDOF_TURN")
+        col.label(text="Add Physics Proxy", icon="PHYSICS")
         col.separator()
         row = col.row(align=True)
 
