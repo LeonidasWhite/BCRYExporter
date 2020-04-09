@@ -373,7 +373,7 @@ def rebuild_armature(armature):
     old_bones = []
     new_bones = []
     obj_childrens = []
-    temp_suffix = "+old"
+    temp_suffix = "+oldbcry"
 
     # collect a list of childrens in armature for fix vgroup names
     for obj in armature.children:
@@ -427,23 +427,21 @@ def rebuild_armature(armature):
         for obj in armature.children:
             if obj.type == 'MESH':
                 for v in obj.vertex_groups.values():
-                    if v.name.endswith("+old"):
+                    if v.name.endswith(temp_suffix):
                         split_name = v.name.split("+")
                         v.name = split_name[0]
 
     # Rename data_path in assigned Actions through NLA strips
-    nla_tracks = armature.animation_data.nla_tracks
 
-    object_actions = [bpy.data.actions[a.strips.keys()[0]] for a in nla_tracks] 
+    if len(bpy.data.actions) > 0:
 
-    for action in object_actions:
-        for fc in action.fcurves:
-            if temp_suffix in fc.data_path:
-                fc.data_path = fc.data_path.replace(temp_suffix, "")
+        for action in bpy.data.actions:
+            for fc in action.fcurves:
+                if temp_suffix in fc.data_path:
+                    fc.data_path = fc.data_path.replace(temp_suffix, "")
 
-            if temp_suffix in fc.group.name:
-                fc.group.name = fc.group.name.replace(temp_suffix, "")
-
+                if temp_suffix in fc.group.name:
+                    fc.group.name = fc.group.name.replace(temp_suffix, "")
 
 # ------------------------------------------------------------------------------
 # Path Manipulations:
