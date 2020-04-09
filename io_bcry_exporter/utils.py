@@ -373,6 +373,7 @@ def rebuild_armature(armature):
     old_bones = []
     new_bones = []
     obj_childrens = []
+    temp_suffix = "+old"
 
     # collect a list of childrens in armature for fix vgroup names
     for obj in armature.children:
@@ -400,7 +401,7 @@ def rebuild_armature(armature):
         new_bones[i].use_connect = old_bones[i].use_connect
         new_bones[i].use_deform = old_bones[i].use_deform
         old_name = old_bones[i].name
-        old_bones[i].name = old_bones[i].name + "+old"
+        old_bones[i].name = old_bones[i].name + temp_suffix
         new_bones[i].name = old_name
 
         # copy custom properties
@@ -409,7 +410,7 @@ def rebuild_armature(armature):
                 new_bones[i][p[0]] = p[1]
 
     for bone in edit_bones:
-        if bone.name.endswith("+old"):
+        if bone.name.endswith(temp_suffix):
             if bone.parent is not None:
                 split_name = bone.name.split("+")
                 temp_name = split_name[0]
@@ -429,6 +430,19 @@ def rebuild_armature(armature):
                     if v.name.endswith("+old"):
                         split_name = v.name.split("+")
                         v.name = split_name[0]
+
+    # Rename data_path in assigned Actions through NLA strips
+    nla_tracks = armature.animation_data.nla_tracks
+
+    object_actions = [bpy.data.actions[a.strips.keys()[0]] for a in nla_tracks] 
+
+    for action in object_actions:
+        for fc in action.fcurves:
+            if temp_suffix in fc.data_path:
+                fc.data_path = fc.data_path.replace(temp_suffix, "")
+
+            if temp_suffix in fc.group.name:
+                fc.group.name = fc.group.name.replace(temp_suffix, "")
 
 
 # ------------------------------------------------------------------------------
