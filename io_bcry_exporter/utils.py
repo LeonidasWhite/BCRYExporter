@@ -911,12 +911,13 @@ def add_fakebones(group=None):
         fakebone.parent = armature
         fakebone.parent_type = "BONE"
         fakebone.parent_bone = pose_bone.name
-        
+
         fakebone.users_collection[0].objects.unlink(fakebone)
-        armature.users_collection[0].objects.link(fakebone)
 
         if group:
             group.objects.link(fakebone)
+        else:
+            armature.users_collection[0].objects.link(fakebone)
 
     if group:
         if get_node_type(group) == 'i_caf':
