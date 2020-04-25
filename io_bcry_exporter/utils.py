@@ -1043,6 +1043,7 @@ def apply_animation_scale(armature):
     if armature is None or armature.type != "ARMATURE":
         return
 
+    original_action = armature.animation_data.action
     skeleton = armature.data
     empties = []
 
@@ -1050,21 +1051,17 @@ def apply_animation_scale(armature):
     scene.frame_set(scene.frame_start)
     for pose_bone in armature.pose.bones:
         bmatrix = pose_bone.bone.head_local
-        bpy.ops.object.empty_add(type='PLAIN_AXES', radius=0.1)
+        bpy.ops.object.empty_add(type='PLAIN_AXES', radius=0.1, location=(0,0,0))
         empty = bpy.context.active_object
         empty.name = pose_bone.name
 
         bpy.ops.object.constraint_add(type='CHILD_OF')
-        bpy.data.objects[empty.name].constraints[
-            'Child Of'].use_scale_x = False
-        bpy.data.objects[empty.name].constraints[
-            'Child Of'].use_scale_y = False
-        bpy.data.objects[empty.name].constraints[
-            'Child Of'].use_scale_z = False
+        bpy.data.objects[empty.name].constraints['Child Of'].use_scale_x = False
+        bpy.data.objects[empty.name].constraints['Child Of'].use_scale_y = False
+        bpy.data.objects[empty.name].constraints['Child Of'].use_scale_z = False
 
         bpy.data.objects[empty.name].constraints['Child Of'].target = armature
-        bpy.data.objects[empty.name].constraints[
-            'Child Of'].subtarget = pose_bone.name
+        bpy.data.objects[empty.name].constraints['Child Of'].subtarget = pose_bone.name
 
         bcPrint("Baking animation on " + empty.name + "...")
         bpy.ops.nla.bake(
@@ -1075,19 +1072,17 @@ def apply_animation_scale(armature):
             visual_keying=True,
             clear_constraints=True,
             clear_parents=False,
+            use_current_action=False,
             bake_types={'OBJECT'})
 
+        empty.animation_data.action.name += "+bcry"
         empties.append(empty)
-
-    for empty in empties:
-        empty.select_set(True)
 
     bcPrint("Baked Animation successfully on empties.")
     deselect_all()
 
     set_active(armature)
     armature.select_set(True)
-    bpy.ops.anim.keyframe_clear_v3d()
 
     bpy.ops.object.transform_apply(rotation=True, scale=True)
 
@@ -1115,9 +1110,13 @@ def apply_animation_scale(armature):
         visual_keying=True,
         clear_constraints=True,
         clear_parents=False,
+        use_current_action=False,
         bake_types={'POSE'})
 
     bpy.ops.object.mode_set(mode='OBJECT')
+
+    armature.animation_data.action.name = original_action.name + "_scaled"
+    armature.animation_data.action.use_fake_user = True
 
     deselect_all()
 
@@ -1126,6 +1125,9 @@ def apply_animation_scale(armature):
         empty.select_set(True)
 
     bpy.ops.object.delete()
+
+    # Remove temp acitons (created by empties)
+    remove_unused_actions()
 
     bcPrint("Apply Animation was completed.")
 
@@ -1438,6 +1440,12 @@ def remove_unused_meshes():
     for mesh in bpy.data.meshes:
         if mesh.users == 0:
             bpy.data.meshes.remove(mesh)
+
+
+def remove_unused_actions():
+    for action in bpy.data.actions:
+        if "+bcry" in action.name:
+            bpy.data.actions.remove(action)
 
 
 def get_bounding_box(object_):
