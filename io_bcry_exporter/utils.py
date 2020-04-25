@@ -437,11 +437,13 @@ def rebuild_armature(armature):
 
         for action in bpy.data.actions:
             for fc in action.fcurves:
-                if temp_suffix in fc.data_path:
-                    fc.data_path = fc.data_path.replace(temp_suffix, "")
+                if fc.data_path:
+                    if temp_suffix in fc.data_path:
+                        fc.data_path = fc.data_path.replace(temp_suffix, "")
 
-                if temp_suffix in fc.group.name:
-                    fc.group.name = fc.group.name.replace(temp_suffix, "")
+                if fc.group:
+                    if temp_suffix in fc.group.name:
+                        fc.group.name = fc.group.name.replace(temp_suffix, "")
 
 # ------------------------------------------------------------------------------
 # Path Manipulations:
