@@ -2324,7 +2324,14 @@ class BCRY_OT_add_root_bone(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
-    # def __init__(self):
+    def __init__(self):
+        bones = [bone for bone in bpy.context.active_object.pose.bones]
+        search_words = ["hips", "pelvis"]
+
+        for bone in bones:
+            for word in search_words:
+                if word in bone.name.lower():
+                    self.hips_bone = bone.name
     #     armature = bpy.context.active_object
     #     if not armature or armature.type != 'ARMATURE':
     #         self.report({'ERROR'}, "Please select a armature object!")
