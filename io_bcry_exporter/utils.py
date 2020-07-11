@@ -175,7 +175,7 @@ def get_bmesh(object_, apply_modifiers=False):
     bcry_split_modifier(object_)
 
     depsgraph = bpy.context.evaluated_depsgraph_get()
-    bpy.ops.object.mode_set(mode='EDIT')
+    #bpy.ops.object.mode_set(mode='EDIT')
 
     if apply_modifiers:
         object_eval = object_.evaluated_get(depsgraph)
@@ -192,7 +192,7 @@ def get_bmesh(object_, apply_modifiers=False):
 
 
 def clear_bmesh(object_, bmesh_):
-    bpy.ops.object.mode_set(mode='OBJECT')
+    #bpy.ops.object.mode_set(mode='OBJECT')
     remove_bcry_split_modifier(object_)
     object_.to_mesh_clear()
 
