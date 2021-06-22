@@ -1,0 +1,20 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - '*'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Upload release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "BCRYExporter.zip"
+          directory: ./io_bcry_exporter
+          token: ${{ secrets.GITHUB_TOKEN }}
