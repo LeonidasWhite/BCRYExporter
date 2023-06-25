@@ -32,7 +32,7 @@ import time
 import xml.dom.minidom
 from collections import OrderedDict
 from datetime import datetime
-from time import clock
+from time import perf_counter as clock
 from xml.dom.minidom import Document, Element, parse, parseString
 
 import bmesh
